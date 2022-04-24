@@ -31,7 +31,7 @@ endless_score = 0
 
 
 # for starting/restarting the game
-def start(*prev_guess):
+def start(*prev_guess) :
     global guesses
     guesses = 0
     global guess
@@ -46,45 +46,45 @@ def start(*prev_guess):
     used = set({})
 
     # for keyboard coloring
-    for line in QWERTY:
-        for key in line:
+    for line in QWERTY :
+        for key in line :
             key_color[key] = white
 
     # for endless gamemode
 
-    if gamemode == "endless" and prev_guess:
+    if gamemode == "endless" and prev_guess :
         color_word(*prev_guess)
 
 
 # clearing the console
-def clear():
+def clear() :
     print("\n" * (term_size()[1] // 2))
 
 
 # drawing the board
-def draw(*err):
+def draw(*err) :
     # guide + keyboard
-    for i in range(len(GUIDE)):
+    for i in range(len(GUIDE)) :
         print(GUIDE[i], end=" ")
 
-        for line in QWERTY[i]:
-            for key in line:
+        for line in QWERTY[i] :
+            for key in line :
                 print(key_color[key] + key, end=" ")
 
         print("")
 
     print(white)
 
-    if game_state == "win":
+    if game_state == "win" :
         print(
             f"{green}Congratulations, you found the answer in {guesses} "
             f"attempt{'s' if guesses > 1 else ''}!\n" + white
         )
 
-    elif err:
+    elif err :
         print(f"{red}{err[0]} {white}")
 
-    if gamemode == "endless":
+    if gamemode == "endless" :
         print(
             f"{green}Word{'' if endless_score == 1 else 's'} found : ",
             endless_score,
@@ -92,19 +92,19 @@ def draw(*err):
         )
 
     # guessed words
-    for i in range(len(guess)):
+    for i in range(len(guess)) :
         print(*guess[i], end="  |  ")
         print(*guess_color[i], end="")
         print(white)
 
     # other lines
-    if game_state == "running":
+    if game_state == "running" :
         for i in range(6 - guesses):
             print("_ " * 5 + " |  " + f"{gray}{MARKER} " * 5 + white)
 
 
 # coloring the words
-def color_word(word):
+def color_word(word) :
     global ans
     global guesses
 
@@ -114,8 +114,8 @@ def color_word(word):
     temp_word = list(word)
 
     # checking for green letters
-    for i in range(len(word)):
-        if temp_word[i] == temp_ans[i]:
+    for i in range(len(word)) :
+        if temp_word[i] == temp_ans[i] :
             temp_arr[i] = green + MARKER
             key_color[temp_word[i]] = green
 
@@ -124,19 +124,19 @@ def color_word(word):
             temp_word[i], temp_ans[i] = "-", "_"
 
     # checking for yellow letters
-    for i in range(len(word)):
+    for i in range(len(word)) :
         if temp_word[i] in temp_ans:
             temp_arr[i] = yellow + MARKER
-            if key_color[temp_word[i]] == white:
+            if key_color[temp_word[i]] == white :
                 key_color[temp_word[i]] = yellow
 
             temp_ans = str(temp_ans).replace(temp_word[i], "/", 1)
             temp_word[i] = "-"
 
     # gray letters
-    for i in range(len(word)):
+    for i in range(len(word)) :
         if not temp_word[i] in temp_ans:
-            if temp_word[i] == "-":
+            if temp_word[i] == "-" :
                 continue
             temp_arr[i] = gray + MARKER
             if key_color[temp_word[i]] == white:
@@ -148,14 +148,14 @@ def color_word(word):
     guess.append(word)
 
     # answer found
-    if word == ans:
+    if word == ans :
         global game_state
         game_state = "win"
 
 
 # help manual
-def help_page():
-    while 1:
+def help_page() :
+    while 1 :
         clear()
         print("Help page for wordle remake\n")
         print("What do you need help with?")
@@ -165,7 +165,7 @@ def help_page():
 
         inp = input("\n>")
 
-        if inp == "1":
+        if inp == "1" :
             clear()
             print(
                 "How to play wordle: ",
@@ -185,7 +185,7 @@ def help_page():
 
             input(f"{gray}[Press enter to continue]{white}")
 
-        elif inp == "2":
+        elif inp == "2" :
             clear()
             print(
                 "Normal : \n\tNormal wordle gamemode based on the nytimes.com version.\n\n"
@@ -196,7 +196,7 @@ def help_page():
 
             input(f"{gray}[Press enter to continue]{white}")
 
-        elif inp == "3":
+        elif inp == "3" :
             break
 
 
@@ -205,7 +205,7 @@ def help_page():
 
 # main menu
 print("Welcome to wordle remake in python by napstaparrot")
-while 1:
+while 1 :
     print("\nPlease choose a gamemode, type 'help' if you need help : ")
     print("0. help")
     print("1. normal")
@@ -214,46 +214,46 @@ while 1:
 
     inp = input("\n> ").lower()
 
-    if inp in ["0", "help"]:
+    if inp in ["0", "help"] :
         help_page()
         clear()
 
-    elif inp in ["1", "normal"]:
+    elif inp in ["1", "normal"] :
         gamemode = "normal"
         break
 
-    elif inp in ["2", "endless"]:
+    elif inp in ["2", "endless"] :
         gamemode = "endless"
         break
 
-    elif inp in ["3", "multi wordle"]:
+    elif inp in ["3", "multi wordle"] :
         gamemode = "multi"
         clear()
         print(red + "Multi Wordle : TBA" + white)
         continue
 
-    else:
+    else :
         clear()
         print(red + "Please enter a number or the gamemode's name" + white)
 
 
 start()
 # main game loop
-while 1:
+while 1 :
     clear()
     # print(ans)
     draw()
 
     # max num of attempts reached
-    if guesses == 6 and game_state == "running":
+    if guesses == 6 and game_state == "running" :
         clear()
         draw(f'\nGame Over! The answer was "{ans}"')
         game_state = "lose"
         print("\n")
         exit()
 
-    if game_state == "win":
-        if gamemode == "endless":
+    if game_state == "win" :
+        if gamemode == "endless" :
             endless_score += 1
             start(guess[-1])
             continue
@@ -264,18 +264,18 @@ while 1:
     # checking for input errors
     while True:
         inp = input("\n").lower()
-        if len(inp) != 5:
+        if len(inp) != 5 :
             clear()
             draw("Please input a 5 letters word\n")
 
-        elif inp not in words:
+        elif inp not in words :
             clear()
             draw(f"{inp} is not in the word list\n")
 
         else:
             break
 
-    for i in inp:
+    for i in inp :
         used.add(i)
 
     color_word(inp)
