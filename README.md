@@ -1,2 +1,1 @@
-# pydle
-Wordle remade in python
+made this cuz im bored
