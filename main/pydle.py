@@ -58,7 +58,7 @@ def start(*prev_guess) :
 
 # clearing the console
 def clear() :
-    print("\n" * (term_size()[1] // 2))
+    print("\n" * term_size()[1])
 
 
 # drawing the board
