@@ -13,14 +13,14 @@ green  = "\u001b[32m"
 yellow = "\u001b[33m"
 gray = "\u001b[30;1m"
 bold = "\u001b[0;1m"
-white  = "\u001b[0m" 
+white  = "\u001b[0m"
 key_color = {}
 
 # const
 MARKER = "O"
 QWERTY = ["qwertyuiop", "asdfghjkl", "zxcvbnm"]
 GUIDE = [
-        f"{green}{MARKER} {white}= Correct Placement    ", 
+        f"{green}{MARKER} {white}= Correct Placement    ",
         f"{yellow}{MARKER} {white}= Misplaced             ",
         f"{gray}{MARKER} {white}= Not In The Word         "
 ]
@@ -35,24 +35,23 @@ def start(*prev_guess) :
     global ans; ans = answers[rand(0, len(answers))]
     global game_state; game_state = "running"
     global used; used = set({})
-    
+
     # for keyboard coloring
     for line in QWERTY :
-        for key in line : 
+        for key in line :
             key_color[key] = white
-        
+
     # for endless gamemode
 
     if (gamemode == "endless" and prev_guess) :
         color_word(*prev_guess)
-        
 
 # clearing the console
 def clear() :
     print("\n" * (term_size()[1] // 2))
 
 
-# drawing the board    
+# drawing the board
 def draw(*err) :
     # guide + keyboard
     for i in range(len(GUIDE)) :
@@ -74,13 +73,13 @@ def draw(*err) :
     
     if gamemode == "endless" :
         print(f"{green}Word{'' if endless_score == 1 else 's'} found : ", endless_score, white)
-    
+
     # guessed words
     for i in range(len(guess)) :
         print(*guess[i], end="  |  ")
         print(*guess_color[i], end="")
         print(white)
-    
+
     # other lines
     if (game_state == "running") :
         for i in range(6 - guesses) :
@@ -96,18 +95,18 @@ def color_word(word) :
     temp_arr = [*range(5)]
     temp_ans = list(ans)
     temp_word = list(word)
-    
+
     # checking for green letters
     for i in range(len(word)) :
         if (temp_word[i] == temp_ans[i]) :
             temp_arr[i] = green + MARKER
             key_color[temp_word[i]] = green
             
-            # remove the letter so that yellow 
+            # remove the letter so that yellow
             # doesn't check the same letter
             temp_word[i], temp_ans[i] = "-", "_"
-    
-    # checking for yellow letters        
+
+    # checking for yellow letters
     for i in range(len(word)) :
         if (temp_word[i] in temp_ans) :
             temp_arr[i] = yellow + MARKER
@@ -115,8 +114,8 @@ def color_word(word) :
                 key_color[temp_word[i]] = yellow  
                 
             temp_ans = str(temp_ans).replace(temp_word[i], "/", 1)
-            temp_word[i] = "-" 
-    
+            temp_word[i] = "-"
+
     # gray letters
     for i in range(len(word)) :
         if (not temp_word[i] in temp_ans) :
@@ -125,12 +124,12 @@ def color_word(word) :
             temp_arr[i] = gray + MARKER
             if (key_color[temp_word[i]] == white) :
                 key_color[temp_word[i]] = gray
-    
+
     guess_color.append(temp_arr)
-            
+
     guesses += 1
     guess.append(word)
-    
+
     # answer found
     if (word == ans) :
         global game_state; game_state = "win"
@@ -222,12 +221,12 @@ while 1 :
 
 
 start()
-# main game loop                            
+# main game loop
 while 1 :
     clear()
     #print(ans)
     draw()
-    
+
     # max num of attempts reached
     if (guesses == 6 and game_state == "running") :
         clear()
@@ -241,24 +240,24 @@ while 1 :
             endless_score += 1
             start(guess[-1])
             continue
-        
+
         print("\n")
         exit()
-    
-    # checking for input errors 
+
+    # checking for input errors
     while True :
         inp = input("\n").lower()
         if (len(inp) != 5) :
             clear()
             draw("Please input a 5 letters word\n")
-        
+
         elif (not inp in words) :
             clear()
             draw(f"{inp} is not in the word list\n")
-            
+
         else :
             break
-    
+
     for i in inp :
         used.add(i)
 
