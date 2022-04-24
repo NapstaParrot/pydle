@@ -1,10 +1,12 @@
 from random import randint as rand
 from os import get_terminal_size as term_size
+from pathlib import Path
 
-with open("words.txt", "r") as f:
+main_dir = Path(__file__).resolve().parent
+with open(main_dir / "words.txt", "r") as f:
     words = [x.strip() for x in f.readlines()]
 
-with open("answers.txt", "r") as f:
+with open(main_dir / "answers.txt", "r") as f:
     answers = [x.strip() for x in f.readlines()]
 
 # ansi colors
