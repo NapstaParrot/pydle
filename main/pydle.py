@@ -1,3 +1,4 @@
+from ast import Num
 from random import randint as rand
 from os import get_terminal_size as term_size
 from pathlib import Path
@@ -28,6 +29,8 @@ GUIDE = [
 ]
 
 endless_score = 0
+num = 1
+max_guesses = 6
 
 
 # for starting/restarting the game
@@ -38,12 +41,15 @@ def start(*prev_guess) :
     guess = []
     global guess_color
     guess_color = []
-    global ans
-    ans = answers[rand(0, len(answers))]
     global game_state
     game_state = "running"
     global used
     used = set({})
+    global boards
+    boards = ["unsolved" for x in range(num)] 
+
+    global ans
+    ans = [answers[rand(0, len(answers))] for x in range(num)]
 
     # for keyboard coloring
     for line in QWERTY :
@@ -62,7 +68,7 @@ def clear() :
 
 
 # drawing the board
-def draw(*err) :
+def draw(*args) :
     # guide + keyboard
     for i in range(len(GUIDE)) :
         print(GUIDE[i], end=" ")
@@ -77,12 +83,12 @@ def draw(*err) :
 
     if game_state == "win" :
         print(
-            f"{green}Congratulations, you found the answer in {guesses} "
+            f"{green}Congratulations, you found the answer{'' if len(ans) == 1 else 's'} in {guesses} "
             f"attempt{'s' if guesses > 1 else ''}!\n" + white
         )
 
-    elif err :
-        print(f"{red}{err[0]} {white}")
+    elif args :
+        print(f"{red}{args[0]} {white}")
 
     if gamemode == "endless" :
         print(
@@ -93,64 +99,81 @@ def draw(*err) :
 
     # guessed words
     for i in range(len(guess)) :
-        print(*guess[i], end="  |  ")
-        print(*guess_color[i], end="")
-        print(white)
+        for j in range(num) :
+            if boards[j][-1] >= str(i)   :
+                print(*guess[i], end="  |  ")
+                print(*guess_color[i][j], end="")
+                print(white, end="     ")
+        
+            else :
+                print("_ " * 5 + " |  " + f"{gray}{MARKER} " * 5 + white, end="    ")
 
-    # other lines
+        print("")
+
+    # empty lines
     if game_state == "running" :
-        for i in range(6 - guesses):
-            print("_ " * 5 + " |  " + f"{gray}{MARKER} " * 5 + white)
+        for i in range(max_guesses - guesses):
+            for j in range(num) :
+                print("_ " * 5 + " |  " + f"{gray}{MARKER} " * 5 + white, end="    ")
+            print("")
 
 
 # coloring the words
 def color_word(word) :
     global ans
     global guesses
+    color = []
 
-    # word coloring
-    temp_arr = [*range(5)]
-    temp_ans = list(ans)
-    temp_word = list(word)
+    for n in range(num) :
+        # word coloring
+        markers = [*range(5)]
+        temp_ans = list(ans[n])
+        temp_word = list(word)
 
-    # checking for green letters
-    for i in range(len(word)) :
-        if temp_word[i] == temp_ans[i] :
-            temp_arr[i] = green + MARKER
-            key_color[temp_word[i]] = green
+        # checking for green letters
+        for i in range(len(word)) :
+            if temp_word[i] == temp_ans[i] :
+                markers[i] = green + MARKER
+                key_color[temp_word[i]] = green
 
-            # remove the letter so that yellow
-            # doesn't check the same letter
-            temp_word[i], temp_ans[i] = "-", "_"
+                # remove the letter so that yellow
+                # doesn't check the same letter
+                temp_word[i], temp_ans[i] = "-", "_"
 
-    # checking for yellow letters
-    for i in range(len(word)) :
-        if temp_word[i] in temp_ans:
-            temp_arr[i] = yellow + MARKER
-            if key_color[temp_word[i]] == white :
-                key_color[temp_word[i]] = yellow
+        # checking for yellow letters
+        for i in range(len(word)) :
+            if temp_word[i] in temp_ans:
+                markers[i] = yellow + MARKER
+                if key_color[temp_word[i]] == white :
+                    key_color[temp_word[i]] = yellow
 
-            temp_ans = str(temp_ans).replace(temp_word[i], "/", 1)
-            temp_word[i] = "-"
+                temp_ans = str(temp_ans).replace(temp_word[i], "/", 1)
+                temp_word[i] = "-"
 
-    # gray letters
-    for i in range(len(word)) :
-        if not temp_word[i] in temp_ans:
-            if temp_word[i] == "-" :
-                continue
-            temp_arr[i] = gray + MARKER
-            if key_color[temp_word[i]] == white:
-                key_color[temp_word[i]] = gray
+        # gray letters
+        for i in range(len(word)) :
+            if not temp_word[i] in temp_ans:
+                if temp_word[i] == "-" :
+                    continue
+                markers[i] = gray + MARKER
+                if key_color[temp_word[i]] == white:
+                    key_color[temp_word[i]] = gray
 
-    guess_color.append(temp_arr)
+        color.append(markers)
 
-    guesses += 1
     guess.append(word)
+    guess_color.append(color)
 
     # answer found
-    if word == ans :
+    for i in range(len(ans)) :
+        if word == ans[i] :
+            boards[i] = "solved" + str(guesses)
+    
+    if not "unsolved" in boards :
         global game_state
         game_state = "win"
+
+    guesses += 1
 
 
 # help manual
@@ -226,11 +249,20 @@ while 1 :
         gamemode = "endless"
         break
 
-    elif inp in ["3", "multi wordle"] :
+    elif inp in ["3", "multi wordle"] : 
         gamemode = "multi"
+        while 1 :
+            try :
+                num = int(input("\nHow many wordles do you want to solve at once?\n> "))
+                break
+            except :
+                print("Please only put in integers")
+        
+        boards = ["unsolved" for x in range(num)]
+        max_guesses = 6 + num - 1
+
         clear()
-        print(red + "Multi Wordle : TBA" + white)
-        continue
+        break
 
     else :
         clear()
@@ -245,9 +277,9 @@ while 1 :
     draw()
 
     # max num of attempts reached
-    if guesses == 6 and game_state == "running" :
+    if guesses == max_guesses and game_state == "running" :
         clear()
-        draw(f'\nGame Over! The answer was "{ans}"')
+        draw('\nGame Over! The answer was "{}"'.format(*ans))
         game_state = "lose"
         print("\n")
         exit()
