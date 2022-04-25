@@ -278,7 +278,7 @@ while 1 :
     # max num of attempts reached
     if guesses == max_guesses and game_state == "running" :
         clear()
-        draw('\nGame Over! The answer was "{}"'.format(*ans))
+        draw(f"\nGame Over! The answer{'' if len(ans) == 1 else 's'} {'was' if len(ans) == 1 else 'were'} ({', '.join(ans)}). Better luck next time!")
         game_state = "lose"
         print("\n")
         exit()
