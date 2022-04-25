@@ -190,7 +190,7 @@ def help_page() :
         if inp == "1" :
             clear()
             print(
-                "How to play wordle: ",
+                "How to play wordle:\n ",
                 "A mystery word is chosen when the program starts. "
                 "Its your job to find that mystery word.\n"
                 "You have 6 total tries. You must enter a valid 5 letter word. "
@@ -198,8 +198,6 @@ def help_page() :
                 "indentification at the side. \n\nFor example :\n"
                 f"{bold}c r a t e  |  {green}0 {gray}0 0 0 0 {white}\n"
                 "This means that the letter c is at the correct spot.\n\n"
-                f"{bold}t r e e s  |  {gray}0 0 {yellow}0 {gray}0 0 {white}\n"
-                f"{bold}t r e e s  |  {gray}0 0 {yellow}0 {gray}0 0 {white}\n"
                 f"{bold}t r e e s  |  {gray}0 0 {yellow}0 {gray}0 0 {white}\n"
                 "This means that one of the two letter e is in the word, but isn't at the correct spot.\n\n"
                 "And if the letter is gray, it means that the letter isn't in the word.\n\n",
