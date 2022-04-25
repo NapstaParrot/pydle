@@ -1,4 +1,3 @@
-from ast import Num
 from random import randint as rand
 from os import get_terminal_size as term_size
 from pathlib import Path
