@@ -19,12 +19,11 @@ white = "\u001b[0m"
 key_color = {}
 
 # const
-MARKER = "O"
 QWERTY = ["qwertyuiop", "asdfghjkl", "zxcvbnm"]
 GUIDE = [
-    f"{green}{MARKER} {white}= Correct Placement    ",
-    f"{yellow}{MARKER} {white}= Misplaced             ",
-    f"{gray}{MARKER} {white}= Not In The Word         ",
+    f"{green}o {white}= Correct Placement    ",
+    f"{yellow}o {white}= Misplaced             ",
+    f"{gray}o {white}= Not In The Word         ",
 ]
 
 endless_score = 0
@@ -100,12 +99,12 @@ def draw(*args) :
     for i in range(len(guess)) :
         for j in range(num) :
             if boards[j][-1] >= str(i)   :
-                print(*guess[i], end="  |  ")
-                print(*guess_color[i][j], end="")
-                print(white, end="     ")
+                for k in range(len(guess[i])) :
+                    print(guess_color[i][j][k] + guess[i][k], end=" ")
+                print(white, end="  ")
         
             else :
-                print("_ " * 5 + " |  " + f"{gray}{MARKER} " * 5 + white, end="    ")
+                print("_ " * 5, end="  ")
 
         print("")
 
@@ -113,7 +112,7 @@ def draw(*args) :
     if game_state == "running" :
         for i in range(max_guesses - guesses):
             for j in range(num) :
-                print("_ " * 5 + " |  " + f"{gray}{MARKER} " * 5 + white, end="    ")
+                print("_ " * 5, end="  ")
             print("")
 
 
@@ -132,7 +131,7 @@ def color_word(word) :
         # checking for green letters
         for i in range(len(word)) :
             if temp_word[i] == temp_ans[i] :
-                markers[i] = green + MARKER
+                markers[i] = green
                 key_color[temp_word[i]] = green
 
                 # remove the letter so that yellow
@@ -142,7 +141,7 @@ def color_word(word) :
         # checking for yellow letters
         for i in range(len(word)) :
             if temp_word[i] in temp_ans:
-                markers[i] = yellow + MARKER
+                markers[i] = yellow
                 if key_color[temp_word[i]] == white :
                     key_color[temp_word[i]] = yellow
 
@@ -154,7 +153,7 @@ def color_word(word) :
             if not temp_word[i] in temp_ans:
                 if temp_word[i] == "-" :
                     continue
-                markers[i] = gray + MARKER
+                markers[i] = gray
                 if key_color[temp_word[i]] == white:
                     key_color[temp_word[i]] = gray
 
@@ -196,9 +195,9 @@ def help_page() :
                 "You have 6 total tries. You must enter a valid 5 letter word. "
                 "Said word will give you color\n"
                 "indentification at the side. \n\nFor example :\n"
-                f"{bold}c r a t e  |  {green}0 {gray}0 0 0 0 {white}\n"
+                f"{bold}{green}c {gray}r a t e{white}\n"
                 "This means that the letter c is at the correct spot.\n\n"
-                f"{bold}t r e e s  |  {gray}0 0 {yellow}0 {gray}0 0 {white}\n"
+                f"{bold}{gray}t r {yellow}e {gray}e s{white}\n"
                 "This means that one of the two letter e is in the word, but isn't at the correct spot.\n\n"
                 "And if the letter is gray, it means that the letter isn't in the word.\n\n",
             )
@@ -270,7 +269,7 @@ start()
 # main game loop
 while 1 :
     clear()
-    # print(ans)
+    print(ans)
     draw()
 
     # max num of attempts reached
