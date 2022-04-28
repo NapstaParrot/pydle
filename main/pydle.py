@@ -269,7 +269,7 @@ start()
 # main game loop
 while 1 :
     clear()
-    print(ans)
+    # print(ans)
     draw()
 
     # max num of attempts reached
