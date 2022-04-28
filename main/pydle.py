@@ -102,7 +102,7 @@ def draw(*args) :
                 for k in range(len(guess[i])) :
                     print(guess_color[i][j][k] + guess[i][k], end=" ")
                 print(white, end="  ")
-        
+
             else :
                 print("_ " * 5, end="  ")
 
@@ -164,9 +164,9 @@ def color_word(word) :
 
     # answer found
     for i in range(len(ans)) :
-        if word == ans[i] :
+        if word == ans[i] and boards[i] == "unsolved" :
             boards[i] = "solved" + str(guesses)
-    
+
     if not "unsolved" in boards :
         global game_state
         game_state = "win"
