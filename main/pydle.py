@@ -1,309 +1,227 @@
-from random import randint as rand
-from os import get_terminal_size as term_size
+import curses
 from pathlib import Path
+import random
 
 main_dir = Path(__file__).resolve().parent
-with open(main_dir / "words.txt", "r") as f:
+with open(main_dir / "words.txt", "r") as f :
     words = [x.strip() for x in f.readlines()]
 
-with open(main_dir / "answers.txt", "r") as f:
+with open(main_dir / "answers.txt", "r") as f :
     answers = [x.strip() for x in f.readlines()]
-
-# ansi colors
-red = "\u001b[31m"
-green = "\u001b[32m"
-yellow = "\u001b[33m"
-gray = "\u001b[30;1m"
-bold = "\u001b[0;1m"
-white = "\u001b[0m"
-key_color = {}
-
-# const
-QWERTY = ["qwertyuiop", "asdfghjkl", "zxcvbnm"]
-GUIDE = [
-    f"{green}o {white}= Correct Placement    ",
-    f"{yellow}o {white}= Misplaced             ",
-    f"{gray}o {white}= Not In The Word         ",
-]
-
-endless_score = 0
-num = 1
-max_guesses = 6
+ANSWER = random.choice(answers)
+# ANSWER = "papal"
 
 
-# for starting/restarting the game
-def start(*prev_guess) :
-    global guesses
-    guesses = 0
-    global guess
-    guess = []
-    global guess_color
-    guess_color = []
-    global game_state
-    game_state = "running"
-    global used
-    used = set({})
-    global boards
-    boards = ["unsolved" for x in range(num)] 
 
-    global ans
-    ans = [answers[rand(0, len(answers))] for x in range(num)]
-
-    # for keyboard coloring
-    for line in QWERTY :
-        for key in line :
-            key_color[key] = white
-
-    # for endless gamemode
-
-    if gamemode == "endless" and prev_guess :
-        color_word(*prev_guess)
-
-
-# clearing the console
-def clear() :
-    print("\n" * term_size()[1])
-
-
-# drawing the board
-def draw(*args) :
-    # guide + keyboard
-    for i in range(len(GUIDE)) :
-        print(GUIDE[i], end=" ")
-
-        for line in QWERTY[i] :
-            for key in line :
-                print(key_color[key] + key, end=" ")
-
-        print("")
-
-    print(white)
-
-    if game_state == "win" :
-        print(
-            f"{green}Congratulations, you found the answer{'' if len(ans) == 1 else 's'} in {guesses} "
-            f"attempt{'s' if guesses > 1 else ''}!\n" + white
-        )
-
-    elif args :
-        print(f"{red}{args[0]} {white}")
-
-    if gamemode == "endless" :
-        print(
-            f"{green}Word{'' if endless_score == 1 else 's'} found : ",
-            endless_score,
-            white,
-        )
-
-    # guessed words
-    for i in range(len(guess)) :
-        for j in range(num) :
-            if boards[j][-1] >= str(i)   :
-                for k in range(len(guess[i])) :
-                    print(guess_color[i][j][k] + guess[i][k], end=" ")
-                print(white, end="  ")
-
-            else :
-                print("_ " * 5, end="  ")
-
-        print("")
-
-    # empty lines
-    if game_state == "running" :
-        for i in range(max_guesses - guesses):
-            for j in range(num) :
-                print("_ " * 5, end="  ")
-            print("")
-
-
-# coloring the words
-def color_word(word) :
-    global ans
-    global guesses
-    color = []
-
-    for n in range(num) :
-        # word coloring
-        markers = [*range(5)]
-        temp_ans = list(ans[n])
-        temp_word = list(word)
-
-        # checking for green letters
-        for i in range(len(word)) :
-            if temp_word[i] == temp_ans[i] :
-                markers[i] = green
-                key_color[temp_word[i]] = green
-
-                # remove the letter so that yellow
-                # doesn't check the same letter
-                temp_word[i], temp_ans[i] = "-", "_"
-
-        # checking for yellow letters
-        for i in range(len(word)) :
-            if temp_word[i] in temp_ans:
-                markers[i] = yellow
-                if key_color[temp_word[i]] == white :
-                    key_color[temp_word[i]] = yellow
-
-                temp_ans = str(temp_ans).replace(temp_word[i], "/", 1)
-                temp_word[i] = "-"
-
-        # gray letters
-        for i in range(len(word)) :
-            if not temp_word[i] in temp_ans:
-                if temp_word[i] == "-" :
-                    continue
-                markers[i] = gray
-                if key_color[temp_word[i]] == white:
-                    key_color[temp_word[i]] = gray
-
-        color.append(markers)
-
-    guess.append(word)
-    guess_color.append(color)
-
-    # answer found
-    for i in range(len(ans)) :
-        if word == ans[i] and boards[i] == "unsolved" :
-            boards[i] = "solved" + str(guesses)
-
-    if not "unsolved" in boards :
-        global game_state
-        game_state = "win"
-
-    guesses += 1
-
-
-# help manual
-def help_page() :
-    while 1 :
-        clear()
-        print("Help page for wordle remake\n")
-        print("What do you need help with?")
-        print("1. How to play wordle.")
-        print("2. What does these gamemodes mean.")
-        print("3. Exit the manual.")
-
-        inp = input("\n>")
-
-        if inp == "1" :
-            clear()
-            print(
-                "How to play wordle:\n ",
-                "A mystery word is chosen when the program starts. "
-                "Its your job to find that mystery word.\n"
-                "You have 6 total tries. You must enter a valid 5 letter word. "
-                "Said word will give you color\n"
-                "indentification at the side. \n\nFor example :\n"
-                f"{bold}{green}c {gray}r a t e{white}\n"
-                "This means that the letter c is at the correct spot.\n\n"
-                f"{bold}{gray}t r {yellow}e {gray}e s{white}\n"
-                "This means that one of the two letter e is in the word, but isn't at the correct spot.\n\n"
-                "And if the letter is gray, it means that the letter isn't in the word.\n\n",
-            )
-
-            input(f"{gray}[Press enter to continue]{white}")
-
-        elif inp == "2" :
-            clear()
-            print(
-                "Normal : \n\tNormal wordle gamemode based on the nytimes.com version.\n\n"
-                "Endless : \n\tLike normal wordle, but when you found the hidden word, that word will become\n"
-                "your next guess. Try to get the most wordle possible.\n\n"
-                "Multi Wordle : \n\tSolve multiple wordles at once.\n\n"
-            )
-
-            input(f"{gray}[Press enter to continue]{white}")
-
-        elif inp == "3" :
-            break
-
-
-# --- MAIN GAME CODES ---#
-
-
-# main menu
-print("Welcome to wordle remake in python by napstaparrot")
-while 1 :
-    print("\nPlease choose a gamemode, type 'help' if you need help : ")
-    print("0. help")
-    print("1. normal")
-    print("2. endless")
-    print("3. multi wordle")
-
-    inp = input("\n> ").lower()
-
-    if inp in ["0", "help"] :
-        help_page()
-        clear()
-
-    elif inp in ["1", "normal"] :
-        gamemode = "normal"
-        break
-
-    elif inp in ["2", "endless"] :
-        gamemode = "endless"
-        break
-
-    elif inp in ["3", "multi wordle"] : 
-        gamemode = "multi"
-        while 1 :
-            try :
-                num = int(input("\nHow many wordles do you want to solve at once?\n> "))
-                break
-            except :
-                print("Please only put in integers")
-        
-        boards = ["unsolved" for x in range(num)]
-        max_guesses = 6 + num - 1
-
-        clear()
-        break
-
+def game_over(*args) :
+    scr, win = args[:2]
+    if win :
+        txt = f"Congratulations! You found the word in {args[2] + 1} attempts."
+        col = curses.color_pair(1)
     else :
-        clear()
-        print(red + "Please enter a number or the gamemode's name" + white)
+        txt = f"Game Over! The answer was \"{ANSWER}\"."
+        col = curses.color_pair(4)
+
+    scr.clear()
+    scr.resize(2, 100)
+
+    txt_mid = STD_X // 2 - len(txt) // 2
+    scr.addstr(0, txt_mid, txt, col)
+
+    box = "[Press any key to continue]"
+    box_mid = STD_X // 2 - len(box) // 2
+    scr.addstr(1, box_mid, box, curses.color_pair(3) | curses.A_BOLD)
+    
+    scr.refresh()
+    scr.getch()
 
 
-start()
-# main game loop
-while 1 :
-    clear()
-    # print(ans)
-    draw()
+error_state = 0
+# error handling
+def error(*args) :
+    """
+    take error window, error code and 
+    board row(optional) as inputs
 
-    # max num of attempts reached
-    if guesses == max_guesses and game_state == "running" :
-        clear()
-        draw(f"\nGame Over! The answer{'' if len(ans) == 1 else 's'} {'was' if len(ans) == 1 else 'were'} ({', '.join(ans)}). Better luck next time!")
-        game_state = "lose"
-        print("\n")
-        exit()
+    ERROR CODES :
+    1. length error
+    2. invalid word
 
-    if game_state == "win" :
-        if gamemode == "endless" :
-            endless_score += 1
-            start(guess[-1])
+    no error code == unspecified error occurred
+    """
+    scr, code = args[:2]
+    if code == 1 :
+        err = "Insufficient letters"
+
+    elif code == 2 :
+        err = "Invaid word"
+
+    scr.clear()
+    mid = STD_X // 2 - len(err) // 2
+    scr.addstr(0, mid, err, curses.color_pair(4))
+    scr.refresh()
+
+
+# word coloring
+def color_word(scr, row, word) :
+    # remove white letters
+    scr.move(0, 0)
+    scr.clrtoeol()
+
+    ans = ANSWER
+    column = 0
+    for i, lttr in enumerate(word) :
+        if lttr == ans[i] :
+            color = curses.color_pair(1) # green
+            attr = curses.A_NORMAL
+
+            # removing the letter from the 
+            # answer so that other color wont 
+            # check the same letter twice
+            ans = ans[:i] + " " + ans[i + 1:]
+
+        elif lttr in ans :
+            color = curses.color_pair(2) # yellow
+            attr = curses.A_NORMAL
+
+            # removing the letter from the
+            # answer so that other color wont 
+            # check the same letter twice
+            ans = ans.replace(lttr, " ", 1)
+
+        else :
+            color = curses.color_pair(3) # gray
+            attr = curses.A_BOLD
+
+        scr.addstr(0, column, f"{lttr}", color | attr)
+        column += 2
+
+
+def main(stdscr) :
+    curses.curs_set(0)
+
+    stdscr.nodelay(True)
+    stdscr.clear()
+    stdscr.refresh()
+
+    # std screen size
+    global STD_Y, STD_X
+    STD_Y, STD_X = stdscr.getmaxyx()
+
+    # colors
+    curses.init_pair(1, curses.COLOR_GREEN, 0)
+    curses.init_pair(2, curses.COLOR_YELLOW, 0)
+    curses.init_pair(3, curses.COLOR_BLACK, 0)
+    curses.init_pair(4, curses.COLOR_RED, 0)
+    curses.init_pair(5, curses.COLOR_WHITE, 0)
+
+    red = curses.color_pair(4)
+
+    # windows and pad
+    board_x = STD_X // 2 - 5
+
+    board_win = curses.newwin(7, 10, 0, board_x)
+    debug_win = curses.newwin(1, STD_X, 15, 0)
+    out_win = curses.newwin(1, STD_X, 7, 0)
+    guess_win = curses.newwin(1, 1, 0, 0)
+    err_color_win = curses.newpad(6, STD_X)
+
+    # drawing empty board
+    for i in range(6) :
+        board_win.addstr('_ ' * 4)
+        board_win.addstr('_' if i == 5 else '_\n')
+    board_win.refresh()
+
+
+    # main game loop
+    QWERTY = "qwertyuiopasdfghjklzxcvbnm"
+    word = []
+    row = 0
+    while True :
+        debug_win.move(0, 0)
+        debug_win.clrtoeol()
+        debug_win.addstr(str((QWERTY)))
+        debug_win.refresh() 
+
+        key = stdscr.getch()
+        
+        # colors the word red if its not a valid word
+        if len(word) == 5 and not("".join(word) in words) :
+            wrd = " ".join(word)
+            err_color_win.addstr(row, board_x, wrd, red)
+            err_color_win.refresh(row, 0, row, 0, row, STD_X)
+        
+        else :
+            # overwriting err color window 
+            guess_win.refresh()
+
+
+        # lowercase'd
+        if 65 <= key <= 90 :
+            key += 32
+
+        # if key isnt the alphabet
+        elif not (97 <= key <= 122) :
+            # if key is escape
+            if key == 27 :
+                break
+
+            # if key is backspace or delete
+            elif key in (8, 127) and len(word) > 0:
+                word.pop()
+
+                guess_win.move(0, len(word) * 2)
+                guess_win.addstr("_")
+                guess_win.refresh()
+                guess_win.resize(1, len(word) * 2 + 1)
+
+            # if key is enter
+            elif key == 10 :
+                # insufficient letters
+                if len(word) < 5 :
+                    error(out_win, 1)
+                    curses.beep()
+                    continue
+
+                # invalid word
+                elif not "".join(word) in words :
+                    error(out_win, 2)
+                    continue
+
+                color_word(guess_win, row, "".join(word))
+                guess_win.refresh()
+
+                # if answer is found
+                if "".join(word) == ANSWER :
+                    game_over(out_win, True, row)
+                    break
+
+                # if attempts limit reached
+                elif row == 5 :
+                    game_over(out_win, False)
+                    break
+                
+                for i in word :
+                    QWERTY = QWERTY.replace(i, "")
+                    
+                row += 1
+                word.clear()
+
             continue
 
-        print("\n")
-        exit()
 
-    # checking for input errors
-    while True:
-        inp = input("\n").lower()
-        if len(inp) != 5 :
-            clear()
-            draw("Please input a 5 letters word\n")
+        # dont add any new letter if word length is 5
+        elif len(word) == 5 :
+            continue
+            
+        guess_win.mvwin(row, board_x)
+        guess_win.resize(1, len(word) * 2 + 2)
+        guess_win.move(0, len(word) * 2)
+        guess_win.addstr(chr(key))
+        guess_win.refresh()
 
-        elif inp not in words :
-            clear()
-            draw(f"{inp} is not in the word list\n")
+        word.append(chr(key))
 
-        else:
-            break
 
-    for i in inp :
-        used.add(i)
 
-    color_word(inp)
+curses.wrapper(main)
