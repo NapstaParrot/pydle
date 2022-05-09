@@ -1,10 +1,12 @@
-made this cuz im bored
+Wordle remake in python using curses!
 
+Made this cuz im bored.
 
-# TO-DOs
-1. use curses instead of normal printing
-2. maybe add more gamemodes
-3. output excess board when multi wordle doesnt fit in one row
-4. package this shit properly?
-5. AFTER CURSES : make the board self-fix when terminal changes size
-6. 
+# Requirements
+1. Python 3.6+
+2. Latest curses version.
+   - On Windows : 
+     - Type `pip install windows-curses` on the command prompt or PowerShell.
+   - On Linux and Mac : 
+     - Curses is already installed.
+3. A terminal that can show colors. CMD on Windows works fine.
