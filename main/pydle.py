@@ -169,7 +169,7 @@ def main(stdscr) :
     debug_win = curses.newwin(1, STD_X, 15, 0)
     out_win = curses.newwin(1, STD_X, 7, 0)
     guess_win = curses.newwin(1, 1, 0, board_x - 1)
-    keyboard_win = curses.newwin(3, 20, 2, 5)
+    keyboard_win = curses.newwin(3, 20, 10, board_x - 5)
     err_color_pad = curses.newpad(6, STD_X)
 
     # drawing empty board
