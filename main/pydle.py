@@ -1,6 +1,7 @@
 import curses
 from pathlib import Path
 import random
+import time
 
 main_dir = Path(__file__).resolve().parent
 with open(main_dir / "words.txt", "r") as f :
@@ -11,6 +12,38 @@ with open(main_dir / "answers.txt", "r") as f :
 ANSWER = random.choice(answers)
 # ANSWER = "fifteen"
 
+
+
+QWERTY = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM←"]
+# copying the qwerty list and changing the letters with curses color pair id
+# in color_word()
+key_colors = QWERTY[:]
+def draw_keyboard(scr, *args) :
+    for i, (keys_row, colors_row) in enumerate(zip(QWERTY, key_colors)) :
+        for j, (key, color) in enumerate(zip(keys_row, colors_row)) :
+            attr = curses.A_NORMAL
+
+            # highlights the pressed key
+            if args :
+                if chr(args[0]) == key.lower() :
+                    attr = curses.A_REVERSE
+                        
+                # if pressed key is the spacebar or del key
+                elif key == "←" and args[0] in (8, 127) :
+                    attr = curses.A_REVERSE
+
+            try :
+                color = int(color)
+            except ValueError :
+                color = 5 # white
+
+            # gray
+            bold = 0
+            if color == 3 :
+                bold = curses.A_BOLD
+
+            scr.addstr(i, j * 2 + i, key, curses.color_pair(color) | attr | bold)
+    scr.refresh()
 
 
 def game_over(*args) :
@@ -63,7 +96,7 @@ def error(*args) :
 
 
 # word coloring
-def color_word(scr, row, word) :
+def color_word(scr, word) :
     # remove white letters
     scr.move(0, 0)
     scr.clrtoeol()
@@ -74,7 +107,7 @@ def color_word(scr, row, word) :
     # check for green and gray first
     for i, lttr in enumerate(wrd) :
         if lttr == ans[i] :
-            colors.append(curses.color_pair(1)) # green
+            colors.append(1) # green
             attrs.append(curses.A_NORMAL)
 
             # removing the letter from the amswer
@@ -82,15 +115,16 @@ def color_word(scr, row, word) :
             # check the same letter twice
             ans = ans[:i] + "_" + ans[i + 1:]
             wrd = wrd[:i] + "-" + wrd[i + 1:]
+
              
         else :
-            colors.append(curses.color_pair(3)) # gray
+            colors.append(3) # gray
             attrs.append(curses.A_BOLD) 
     
     # overwriting existing colors with yellows
     for i, lttr in enumerate(wrd) :
         if lttr in ans :
-            colors[i] = curses.color_pair(2) # yellow
+            colors[i] = 2 # yellow
             attrs[i] = curses.A_NORMAL
 
             # removing the letter from the amswer
@@ -99,8 +133,12 @@ def color_word(scr, row, word) :
             ans = ans.replace(lttr, "_", 1)
             wrd = wrd.replace(lttr, "-", 1)
     
+    global key_colors
     for i, (c, a) in enumerate(zip(colors, attrs)) :
-        scr.addstr(0, i * 2, word[i], c | a)
+        scr.addstr(0, i * 2, word[i], curses.color_pair(c) | a)
+        # changing keyboard color
+        x = '|'.join(key_colors).replace(word[i].upper(), str(c))
+        key_colors = x.split('|')
 
 
 
@@ -130,8 +168,9 @@ def main(stdscr) :
     board_win = curses.newwin(7, 10, 0, board_x)
     debug_win = curses.newwin(1, STD_X, 15, 0)
     out_win = curses.newwin(1, STD_X, 7, 0)
-    guess_win = curses.newwin(1, 1, 0, 0)
-    err_color_win = curses.newpad(6, STD_X)
+    guess_win = curses.newwin(1, 1, 0, board_x - 1)
+    keyboard_win = curses.newwin(3, 20, 2, 5)
+    err_color_pad = curses.newpad(6, STD_X)
 
     # drawing empty board
     for i in range(6) :
@@ -139,25 +178,38 @@ def main(stdscr) :
         board_win.addstr('_' if i == 5 else '_\n')
     board_win.refresh()
 
+    # default keyboard
+    draw_keyboard(keyboard_win)
 
     # main game loop
-    QWERTY = "qwertyuiopasdfghjklzxcvbnm"
     word = []
     row = 0
-    z= 0
+    time_start = 0
+    time_current = 0
     while True :
         debug_win.move(0, 0)
         debug_win.clrtoeol()
-        debug_win.addstr(str(z)[-1])
+        debug_win.addstr(0, 0, str())
         debug_win.refresh() 
 
         key = stdscr.getch()
+
+        # keyboard highlighting :flushed:
+        time_current = time.perf_counter()
+        if round(time_current - time_start, 1) == 0.2 :
+            # resets the keyboard after 500ms
+            draw_keyboard(keyboard_win) 
+
+        if key > 0 :
+            time_start = time.perf_counter()
+            draw_keyboard(keyboard_win, key) # highlithing pressed key
         
+
         # colors the word red if its not a valid word
         if len(word) == 5 and not("".join(word) in words) :
             wrd = " ".join(word)
-            err_color_win.addstr(row, board_x, wrd, red)
-            err_color_win.refresh(row, 0, row, 0, row, board_x + 10)
+            err_color_pad.addstr(row, 0, wrd, red)
+            err_color_pad.refresh(row, 0, row, board_x, row, board_x + 10)
         
         else :
             # overwriting err color window 
@@ -196,7 +248,7 @@ def main(stdscr) :
                     error(out_win, 2)
                     continue
 
-                color_word(guess_win, row, "".join(word))
+                color_word(guess_win, "".join(word))
                 guess_win.refresh()
 
                 # if answer is found
@@ -209,8 +261,8 @@ def main(stdscr) :
                     game_over(out_win, False)
                     break
                 
-                for i in word :
-                    QWERTY = QWERTY.replace(i, "")
+                #for i in word :
+                #    QWERTY = QWERTY.replace(i, "")
                     
                 row += 1
                 word.clear()
