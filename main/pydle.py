@@ -9,7 +9,7 @@ with open(main_dir / "words.txt", "r") as f :
 with open(main_dir / "answers.txt", "r") as f :
     answers = [x.strip() for x in f.readlines()]
 ANSWER = random.choice(answers)
-# ANSWER = "fifty"
+# ANSWER = "fifteen"
 
 
 
@@ -70,13 +70,12 @@ def color_word(scr, row, word) :
 
     ans = ANSWER # temp answer
     wrd = word   # temp word
-    colors = [*range(5)]
-    attrs = [*range(5)]
+    colors, attrs = [], []
     # check for green and gray first
     for i, lttr in enumerate(wrd) :
         if lttr == ans[i] :
-            colors[i] = curses.color_pair(1) # green
-            attrs[i] = curses.A_NORMAL
+            colors.append(curses.color_pair(1)) # green
+            attrs.append(curses.A_NORMAL)
 
             # removing the letter from the amswer
             # and word so that other color wont 
@@ -85,9 +84,10 @@ def color_word(scr, row, word) :
             wrd = wrd[:i] + "-" + wrd[i + 1:]
              
         else :
-            colors[i] = curses.color_pair(3) # gray
-            attrs[i] = curses.A_BOLD 
-            
+            colors.append(curses.color_pair(3)) # gray
+            attrs.append(curses.A_BOLD) 
+    
+    # overwriting existing colors with yellows
     for i, lttr in enumerate(wrd) :
         if lttr in ans :
             colors[i] = curses.color_pair(2) # yellow
@@ -101,7 +101,6 @@ def color_word(scr, row, word) :
     
     for i, (c, a) in enumerate(zip(colors, attrs)) :
         scr.addstr(0, i * 2, word[i], c | a)
-
 
 
 
@@ -145,10 +144,11 @@ def main(stdscr) :
     QWERTY = "qwertyuiopasdfghjklzxcvbnm"
     word = []
     row = 0
+    z= 0
     while True :
         debug_win.move(0, 0)
         debug_win.clrtoeol()
-        debug_win.addstr(str((QWERTY, len(word))))
+        debug_win.addstr(str(z)[-1])
         debug_win.refresh() 
 
         key = stdscr.getch()
@@ -157,7 +157,7 @@ def main(stdscr) :
         if len(word) == 5 and not("".join(word) in words) :
             wrd = " ".join(word)
             err_color_win.addstr(row, board_x, wrd, red)
-            err_color_win.refresh(row, 0, row, 0, row, STD_X)
+            err_color_win.refresh(row, 0, row, 0, row, board_x + 10)
         
         else :
             # overwriting err color window 
