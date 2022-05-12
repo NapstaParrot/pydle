@@ -1,6 +1,7 @@
 import curses
 from pathlib import Path
 import random
+from secrets import choice
 import time
 
 main_dir = Path(__file__).resolve().parent
@@ -45,6 +46,19 @@ def draw_keyboard(scr, *args) :
             scr.addstr(i, j * 2 + i, key, curses.color_pair(color) | attr | bold)
     scr.refresh()
 
+
+start_time = 0
+def keyboard_highlights(scr, key) :
+    global start_time
+    if key > 0 :
+        start_time = time.perf_counter()
+        draw_keyboard(scr, key) # highlithing pressed key
+
+    current_time = time.perf_counter()
+    if round(current_time - start_time, 1) == 0.2 :
+        # resets the keyboard after 200ms
+        draw_keyboard(scr) 
+        
 
 def game_over(*args) :
     scr, win = args[:2]
@@ -142,6 +156,14 @@ def color_word(scr, word) :
 
 
 
+# main menu
+def menu() :
+    scr = curses.newwin(STD_Y, STD_X, 0, 0)
+    scr.addstr(0, 0, "Welcome to pydle, a wordle remake by Napstaparrot")
+    scr.getch()
+    scr.clear()
+    scr.refresh()
+
 def main(stdscr) :
     curses.curs_set(0)
 
@@ -157,20 +179,24 @@ def main(stdscr) :
     curses.init_pair(1, curses.COLOR_GREEN, 0)
     curses.init_pair(2, curses.COLOR_YELLOW, 0)
     curses.init_pair(3, curses.COLOR_BLACK, 0)
-    curses.init_pair(4, curses.COLOR_RED, 0)
+    curses.init_pair(4, 0, curses.COLOR_RED)
     curses.init_pair(5, curses.COLOR_WHITE, 0)
 
     red = curses.color_pair(4)
 
-    # windows and pad
+    # top left board coords
     board_x = STD_X // 2 - 5
 
+    # windows and pad
     board_win = curses.newwin(7, 10, 0, board_x)
     debug_win = curses.newwin(1, STD_X, 15, 0)
     out_win = curses.newwin(1, STD_X, 7, 0)
     guess_win = curses.newwin(1, 1, 0, board_x - 1)
     keyboard_win = curses.newwin(3, 20, 10, board_x - 5)
     err_color_pad = curses.newpad(6, STD_X)
+
+    # choice menu / main menu
+    menu()
 
     # drawing empty board
     for i in range(6) :
@@ -184,8 +210,6 @@ def main(stdscr) :
     # main game loop
     word = []
     row = 0
-    time_start = 0
-    time_current = 0
     while True :
         debug_win.move(0, 0)
         debug_win.clrtoeol()
@@ -195,15 +219,7 @@ def main(stdscr) :
         key = stdscr.getch()
 
         # keyboard highlighting :flushed:
-        time_current = time.perf_counter()
-        if round(time_current - time_start, 1) == 0.2 :
-            # resets the keyboard after 500ms
-            draw_keyboard(keyboard_win) 
-
-        if key > 0 :
-            time_start = time.perf_counter()
-            draw_keyboard(keyboard_win, key) # highlithing pressed key
-        
+        keyboard_highlights(keyboard_win, key)
 
         # colors the word red if its not a valid word
         if len(word) == 5 and not("".join(word) in words) :
@@ -240,7 +256,6 @@ def main(stdscr) :
                 # insufficient letters
                 if len(word) < 5 :
                     error(out_win, 1)
-                    curses.beep()
                     continue
 
                 # invalid word
