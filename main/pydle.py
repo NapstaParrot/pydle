@@ -1,8 +1,10 @@
 import curses
-from pathlib import Path
 import random
-from secrets import choice
-import time
+from pathlib import Path
+
+import keyboard
+from game_over import game_over
+
 
 main_dir = Path(__file__).resolve().parent
 with open(main_dir / "words.txt", "r") as f :
@@ -12,75 +14,6 @@ with open(main_dir / "answers.txt", "r") as f :
     answers = [x.strip() for x in f.readlines()]
 ANSWER = random.choice(answers)
 # ANSWER = "fifteen"
-
-
-
-QWERTY = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM←"]
-# copying the qwerty list and changing the letters with curses color pair id
-# in color_word()
-key_colors = QWERTY[:]
-def draw_keyboard(scr, *args) :
-    for i, (keys_row, colors_row) in enumerate(zip(QWERTY, key_colors)) :
-        for j, (key, color) in enumerate(zip(keys_row, colors_row)) :
-            attr = curses.A_NORMAL
-
-            # highlights the pressed key
-            if args :
-                if chr(args[0]) == key.lower() :
-                    attr = curses.A_REVERSE
-                        
-                # if pressed key is the spacebar or del key
-                elif key == "←" and args[0] in (8, 127) :
-                    attr = curses.A_REVERSE
-
-            try :
-                color = int(color)
-            except ValueError :
-                color = 5 # white
-
-            # gray
-            bold = 0
-            if color == 3 :
-                bold = curses.A_BOLD
-
-            scr.addstr(i, j * 2 + i, key, curses.color_pair(color) | attr | bold)
-    scr.refresh()
-
-
-start_time = 0
-def keyboard_highlights(scr, key) :
-    global start_time
-    if key > 0 :
-        start_time = time.perf_counter()
-        draw_keyboard(scr, key) # highlithing pressed key
-
-    current_time = time.perf_counter()
-    if round(current_time - start_time, 1) == 0.2 :
-        # resets the keyboard after 200ms
-        draw_keyboard(scr) 
-        
-
-def game_over(*args) :
-    scr, win = args[:2]
-    if win :
-        txt = f"Congratulations! You found the word in {args[2] + 1} attempts."
-        col = curses.color_pair(1)
-    else :
-        txt = f"Game Over! The answer was \"{ANSWER}\"."
-        col = curses.color_pair(4)
-
-    scr.clear()
-    scr.resize(2, 100)
-
-    txt_mid = STD_X // 2 - len(txt) // 2
-    scr.addstr(0, txt_mid, txt, col)
-
-    box = "[Press any key to continue]"
-    box_mid = STD_X // 2 - len(box) // 2
-    scr.addstr(1, box_mid, box, curses.color_pair(3) | curses.A_BOLD)
-    
-    scr.refresh()
-    scr.getch()
 
 
 error_state = 0
@@ -147,22 +80,34 @@ def color_word(scr, word) :
             ans = ans.replace(lttr, "_", 1)
             wrd = wrd.replace(lttr, "-", 1)
     
-    global key_colors
     for i, (c, a) in enumerate(zip(colors, attrs)) :
         scr.addstr(0, i * 2, word[i], curses.color_pair(c) | a)
-        # changing keyboard color
-        x = '|'.join(key_colors).replace(word[i].upper(), str(c))
-        key_colors = x.split('|')
 
+    keyboard.change_color(word, colors)
 
 
 # main menu
 def menu() :
     scr = curses.newwin(STD_Y, STD_X, 0, 0)
     scr.addstr(0, 0, "Welcome to pydle, a wordle remake by Napstaparrot")
-    scr.getch()
+
+    # options
+    scr.addstr(2, 0, "0) Help Page ")
+    scr.addstr(3, 0, "1) Normal    ")
+    scr.addstr(4, 0, "2) Endless   ")
+
+    while 1 :
+        key = scr.getkey()
+
+        if key == 27 :
+            break
+
+        elif key == 0 :
+            pass
+
     scr.clear()
     scr.refresh()
+
 
 def main(stdscr) :
     curses.curs_set(0)
@@ -179,7 +124,7 @@ def main(stdscr) :
     curses.init_pair(1, curses.COLOR_GREEN, 0)
     curses.init_pair(2, curses.COLOR_YELLOW, 0)
     curses.init_pair(3, curses.COLOR_BLACK, 0)
-    curses.init_pair(4, 0, curses.COLOR_RED)
+    curses.init_pair(4, curses.COLOR_RED, 0)
     curses.init_pair(5, curses.COLOR_WHITE, 0)
 
     red = curses.color_pair(4)
@@ -188,15 +133,14 @@ def main(stdscr) :
     board_x = STD_X // 2 - 5
 
     # windows and pad
-    board_win = curses.newwin(7, 10, 0, board_x)
-    debug_win = curses.newwin(1, STD_X, 15, 0)
-    out_win = curses.newwin(1, STD_X, 7, 0)
-    guess_win = curses.newwin(1, 1, 0, board_x - 1)
-    keyboard_win = curses.newwin(3, 20, 10, board_x - 5)
+    board_win     = curses.newwin(7, 10, 0, board_x)
+    debug_win     = curses.newwin(1, STD_X, 15, 0)
+    guess_win     = curses.newwin(1, 1, 0, board_x - 1)
+    out_win       = curses.newwin(1, STD_X, 7, 0)
     err_color_pad = curses.newpad(6, STD_X)
 
     # choice menu / main menu
-    menu()
+    #menu()
 
     # drawing empty board
     for i in range(6) :
@@ -205,7 +149,7 @@ def main(stdscr) :
     board_win.refresh()
 
     # default keyboard
-    draw_keyboard(keyboard_win)
+    keyboard.draw()
 
     # main game loop
     word = []
@@ -217,9 +161,9 @@ def main(stdscr) :
         debug_win.refresh() 
 
         key = stdscr.getch()
-
+        
         # keyboard highlighting :flushed:
-        keyboard_highlights(keyboard_win, key)
+        keyboard.key_press(key)
 
         # colors the word red if its not a valid word
         if len(word) == 5 and not("".join(word) in words) :
@@ -268,12 +212,12 @@ def main(stdscr) :
 
                 # if answer is found
                 if "".join(word) == ANSWER :
-                    game_over(out_win, True, row)
+                    game_over(True, row)
                     break
 
                 # if attempts limit reached
                 elif row == 5 :
-                    game_over(out_win, False)
+                    game_over(False)
                     break
                 
                 #for i in word :
