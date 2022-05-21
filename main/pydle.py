@@ -180,66 +180,63 @@ def main(stdscr) :
         if 65 <= key <= 90 :
             key += 32
 
-        # if key isnt the alphabet
-        elif not (97 <= key <= 122) :
-            # if key is escape
-            if key == 27 :
+        elif 97 <= key <= 122 :
+            # prints the words one by one :D
+            guess_win.mvwin(row, board_x)
+            guess_win.resize(1, len(word) * 2 + 2)
+            guess_win.move(0, len(word) * 2)
+            guess_win.addstr(chr(key))
+            guess_win.refresh()
+
+            word.append(chr(key))
+
+        # if key is escape
+        elif key == 27 :
+            break
+
+        # if key is backspace or delete
+        elif key in (8, 127) and len(word) > 0:
+            word.pop()
+
+            guess_win.move(0, len(word) * 2)
+            guess_win.addstr("_")
+            guess_win.refresh()
+            guess_win.resize(1, len(word) * 2 + 1)
+
+        # if key is enter
+        elif key == 10 :
+            # insufficient letters
+            if len(word) < 5 :
+                error(out_win, 1)
+                continue
+
+            # invalid word
+            elif not "".join(word) in words :
+                error(out_win, 2)
+                continue
+
+            color_word(guess_win, "".join(word))
+            guess_win.refresh()
+            
+            # if answer is found
+            if "".join(word) == ANSWER :
+                game_over(True, row)
                 break
 
-            # if key is backspace or delete
-            elif key in (8, 127) and len(word) > 0:
-                word.pop()
+            # if attempts limit reached
+            elif row == 5 :
+                game_over(False)
+                break
 
-                guess_win.move(0, len(word) * 2)
-                guess_win.addstr("_")
-                guess_win.refresh()
-                guess_win.resize(1, len(word) * 2 + 1)
-
-            # if key is enter
-            elif key == 10 :
-                # insufficient letters
-                if len(word) < 5 :
-                    error(out_win, 1)
-                    continue
-
-                # invalid word
-                elif not "".join(word) in words :
-                    error(out_win, 2)
-                    continue
-
-                color_word(guess_win, "".join(word))
-                guess_win.refresh()
-
-                # if answer is found
-                if "".join(word) == ANSWER :
-                    game_over(True, row)
-                    break
-
-                # if attempts limit reached
-                elif row == 5 :
-                    game_over(False)
-                    break
-                
-                #for i in word :
-                #    QWERTY = QWERTY.replace(i, "")
-                    
-                row += 1
-                word.clear()
-
-            continue
-
+            #for i in word :
+            #    QWERTY = QWERTY.replace(i, "")
+   
+            row += 1
+            word.clear()
 
         # dont add any new letter if word length is 5
         elif len(word) == 5 :
             continue
-            
-        guess_win.mvwin(row, board_x)
-        guess_win.resize(1, len(word) * 2 + 2)
-        guess_win.move(0, len(word) * 2)
-        guess_win.addstr(chr(key))
-        guess_win.refresh()
-
-        word.append(chr(key))
 
 
 
