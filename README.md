@@ -8,5 +8,5 @@ Made this cuz im bored.
    - On Windows : 
      - Type `pip install windows-curses` on the command prompt or PowerShell.
    - On Linux and Mac : 
-     - Curses is already installed.
+     - Figure it out
 3. A terminal that can show colors. CMD on Windows works fine.
